@@ -2,12 +2,16 @@ class PaymentModel {
   String? uidPayment;
   String? nameUser;
   String? idUser;
+  String? nameClient;
+  String? status;
   int? money;
 
   PaymentModel({
     this.uidPayment,
     this.nameUser,
     this.idUser,
+    this.nameClient,
+    this.status,
     this.money,
   });
 
@@ -25,6 +29,8 @@ class PaymentModel {
       uidPayment: map['uidPayment'],
       nameUser: map['nameUser'],
       idUser: map['idUser'],
+      nameClient: map['nameClient'],
+      status: map['status'],
       money: map['money']?.toInt(),
     );
   }
@@ -40,6 +46,12 @@ class PaymentModel {
     }
     if (idUser != null) {
       result.addAll({'idUser': idUser});
+    }
+    if (nameClient != null) {
+      result.addAll({'nameClient': nameClient});
+    }
+    if (status != null) {
+      result.addAll({'status': status});
     }
     if (money != null) {
       result.addAll({'money': money});

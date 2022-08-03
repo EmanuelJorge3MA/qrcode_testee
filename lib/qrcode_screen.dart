@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:qrcode_teste/payment_model.dart';
+import 'package:uuid/uuid.dart';
 
 class QrCodeScreen extends StatefulWidget {
   const QrCodeScreen({Key? key}) : super(key: key);
@@ -13,8 +15,9 @@ class QrCodeScreen extends StatefulWidget {
 class _QrCodeScreenState extends State<QrCodeScreen> {
   final controller = TextEditingController();
   String ticket = '';
-  String nameAccount = 'Luís Bragança';
-  String idAccount = 'A232205';
+  String nameAccount = 'Emanuel Jorge';
+  String idAccount = 'A244205';
+  String uidPayment = '';
   int money = 0;
 
   Future<void> realQRCode() async {
@@ -24,11 +27,80 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
       false,
       ScanMode.QR,
     );
-    setState(() => ticket = code != '-1' ? code : 'Não validado');
+    setState(() {
+      ticket = code != '-1' ? code : 'Não validado';
+      if (code != '-1') {
+        updateTask(code);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: const BorderRadius.all(Radius.circular(30))),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 14,
+                    color: Colors.green,
+                  ),
+                  SizedBox(
+                    width: 4,
+                  ),
+                  Text(
+                    'Pago',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        );
+      }
+    });
   }
 
   Future<void> createPayment() async {
-    final taskData = FirebaseFirestore.instance.collection('payment').doc();
+    PaymentModel paymentModel = PaymentModel(
+      uidPayment: uidPayment,
+      nameUser: nameAccount,
+      idUser: idAccount,
+      nameClient: '',
+      status: 'pendente',
+      money: money,
+    );
+
+    final taskData =
+        FirebaseFirestore.instance.collection('payment').doc(uidPayment);
+
+    await taskData.set(paymentModel.toMap());
+  }
+
+  Future updateTask(String uidPayQr) async {
+    PaymentModel paymentModel = PaymentModel(
+      // uidPayment: uidPayment,
+      // nameUser: nameAccount,
+      // idUser: idAccount,
+      nameClient: nameAccount,
+      status: 'Pago',
+      // money: money,
+    );
+
+    final firebaseFirestore =
+        FirebaseFirestore.instance.collection('payment').doc(uidPayQr);
+
+    await firebaseFirestore.update(paymentModel.toMap());
   }
 
   @override
@@ -89,6 +161,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
             onSubmitted: (value) {
               setState(() {
                 money = int.parse(value);
+                uidPayment = Uuid().v1();
+                createPayment();
               });
             },
             decoration: const InputDecoration(
@@ -104,7 +178,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
             height: 20,
           ),
           QrImage(
-            data: 'ID Account: $idAccount, Money: $money Kz',
+            data: uidPayment,
             size: 200,
             backgroundColor: Colors.white,
           ),
